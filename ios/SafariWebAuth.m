@@ -49,6 +49,8 @@ RCT_EXPORT_METHOD(requestAuth:(NSURL *)requestURL)
         }
         #endif
 
+        authenticationVC.prefersEphemeralWebBrowserSession = YES;
+
         _authenticationVC = authenticationVC;
 
         [authenticationVC start];
