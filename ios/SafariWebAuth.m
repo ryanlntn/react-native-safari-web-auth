@@ -8,7 +8,7 @@
 ASWebAuthenticationSession *_authenticationVC;
 #pragma clang diagnostic pop
 
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000 || __MAC_OS_X_VERSION_MAX_ALLOWED >= 101500
 #import <AuthenticationServices/AuthenticationServices.h>
 @interface SafariWebAuth() <ASWebAuthenticationPresentationContextProviding>
 @end
@@ -30,7 +30,7 @@ RCT_EXPORT_METHOD(requestAuth:(NSURL *)requestURL)
         return;
     }
     
-    if (@available(iOS 12.0, *)) {
+    if (@available(iOS 12.0, macOS 10.15, *)) {
         ASWebAuthenticationSession* authenticationVC =
         [[ASWebAuthenticationSession alloc] initWithURL:requestURL
                                       callbackURLScheme: @""
@@ -39,12 +39,16 @@ RCT_EXPORT_METHOD(requestAuth:(NSURL *)requestURL)
             _authenticationVC = nil;
 
             if (callbackURL) {
+                #if TARGET_OS_IPHONE
                 [RCTSharedApplication() openURL:callbackURL];
+                #else
+                [[NSWorkspace sharedWorkspace] openURL:callbackURL];
+                #endif                
             }
         }];
 
-        #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
-        if (@available(iOS 13.0, *)) {
+        #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000 || __MAC_OS_X_VERSION_MAX_ALLOWED >= 101500
+        if (@available(iOS 13.0, macOS 10.15, *)) {
             authenticationVC.presentationContextProvider = self;
         }
         #endif
@@ -62,6 +66,14 @@ RCT_EXPORT_METHOD(requestAuth:(NSURL *)requestURL)
 
 - (ASPresentationAnchor)presentationAnchorForWebAuthenticationSession:(ASWebAuthenticationSession *)session  API_AVAILABLE(ios(13.0)){
    return UIApplication.sharedApplication.keyWindow;
+}
+#endif
+
+#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101500
+#pragma mark - ASWebAuthenticationPresentationContextProviding
+
+- (ASPresentationAnchor)presentationAnchorForWebAuthenticationSession:(ASWebAuthenticationSession *)session  API_AVAILABLE(macos(10.15)){
+   return NSApplication.sharedApplication.keyWindow;
 }
 #endif
 
